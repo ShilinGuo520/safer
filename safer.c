@@ -5,7 +5,7 @@
 #include "stdio.h" 
 #include "string.h"
 
-u1byte  expf[256] =
+unsigned char  expf[256] =
 {     1,  45, 226, 147, 190,  69,  21, 174, 120,   3, 135, 164, 184,  56, 207,  63, 
       8, 103,   9, 148, 235,  38, 168, 107, 189,  24,  52,  27, 187, 191, 114, 247, 
      64,  53,  72, 156,  81,  47,  59,  85, 227, 192, 159, 216, 211, 243, 141, 177, 
@@ -24,7 +24,7 @@ u1byte  expf[256] =
     225, 102, 221, 179,  88, 105,  99,  86,  15, 161,  49, 149,  23,   7,  58,  40 
 };
  
-u1byte logf[512] = 
+unsigned char logf[512] = 
 {
     128,   0, 176,   9,  96, 239, 185, 253,  16,  18, 159, 228, 105, 186, 173, 248, 
     192,  56, 194, 101,  79,   6, 148, 252,  25, 222, 106,  27,  93,  78, 168, 130, 
@@ -61,13 +61,13 @@ u1byte logf[512] =
     184,  64, 120,  45,  58, 233, 100,  31, 146, 144, 125,  57, 111, 224, 137,  48
 };
  
-u1byte  l_key[33 * 16];
-u4byte  k_bytes;
+unsigned char  l_key[33 * 16];
+unsigned int  k_bytes;
  
-u4byte *set_key(const u4byte in_key[], const u4byte key_len)
+unsigned int *set_key(const unsigned int in_key[], const unsigned int key_len)
 {
-    u1byte  by, lk[33];
-    u4byte  i, j, k, l, m;
+    unsigned char  by, lk[33];
+    unsigned int  i, j, k, l, m;
  
     get_key(lk, key_len);
     k_bytes = key_len / 8; lk[k_bytes] = 0;
@@ -94,12 +94,12 @@ u4byte *set_key(const u4byte in_key[], const u4byte key_len)
             }
         }
     }
-    return (u4byte*)l_key;
+    return (unsigned int*)l_key;
 }
  
-void do_fr(u1byte x[16], u1byte *kp)
+void do_fr(unsigned char x[16], unsigned char *kp)
 {
-    u1byte  t;
+    unsigned char t;
  
     x[ 0] = expf[x[ 0] ^ kp[ 0]] + kp[16];
     x[ 1] = logf[x[ 1] + kp[ 1]] ^ kp[17]; 
