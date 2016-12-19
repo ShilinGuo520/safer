@@ -45,13 +45,7 @@ Mean:         3392 cycles =     7.5 mbits/sec
 #include "./std_defs.h"
 #include "stdio.h" 
 #include "string.h"
-static char *alg_name[] = { "safer", "safer.c", "saferpls" };
- 
-char **cipher_name()
-{
-    return alg_name;
-};
- 
+
 u1byte  expf[256] =
 {     1,  45, 226, 147, 190,  69,  21, 174, 120,   3, 135, 164, 184,  56, 207,  63, 
       8, 103,   9, 148, 235,  38, 168, 107, 189,  24,  52,  27, 187, 191, 114, 247, 
@@ -119,44 +113,34 @@ u4byte *set_key(const u4byte in_key[], const u4byte key_len)
  
     k_bytes = key_len / 8; lk[k_bytes] = 0;
  
-    for(i = 0; i < k_bytes; ++i)
-    {
+    for(i = 0; i < k_bytes; ++i) {
         lk[k_bytes] ^= lk[i]; l_key[i] = lk[i];
     }
  
-    for(i = 0; i < k_bytes; ++i)
-    {
-        for(j = 0; j <= k_bytes; ++j)
-        {
+    for(i = 0; i < k_bytes; ++i) {
+        for(j = 0; j <= k_bytes; ++j) {
             by = lk[j]; lk[j] = by << 3 | by >> 5;
         }
- 
         k = 17 * i + 35; l = 16 * i + 16; m = i + 1;
  
-        if(i < 16)
-        {
-            for(j = 0; j < 16; ++j)
-            {
+        if(i < 16) {
+            for(j = 0; j < 16; ++j) {
                 l_key[l + j] = lk[m] + expf[expf[(k + j) & 255]];
- 
                 m = (m == k_bytes ? 0 : m + 1);
             }
-        }
-        else
-        {
-            for(j = 0; j < 16; ++j)
-            {
+        } else {
+            for(j = 0; j < 16; ++j) {
                 l_key[l + j] = lk[m] + expf[(k + j) & 255];
- 
                 m = (m == k_bytes ? 0 : m + 1);
             }
         }
     }
     return (u4byte*)l_key;
-};
+}
  
 void do_fr(u1byte x[16], u1byte *kp)
-{   u1byte  t;
+{
+    u1byte  t;
  
     x[ 0] = expf[x[ 0] ^ kp[ 0]] + kp[16];
     x[ 1] = logf[x[ 1] + kp[ 1]] ^ kp[17]; 
@@ -220,147 +204,8 @@ void do_fr(u1byte x[16], u1byte *kp)
     t = x[1]; x[1] = x[7]; x[7] = x[11]; x[11] = x[5]; x[5] = x[13]; x[13] = t; 
      
     t = x[15]; x[15] = x[3]; x[3] = t;
-};
+}
  
-void do_ir(u1byte x[16], u1byte *kp)
-{   u1byte  t;
- 
-    t = x[3]; x[3] = x[15]; x[15] = t; 
- 
-    t = x[13]; x[13] = x[5]; x[5] = x[11]; x[11] = x[7]; x[7] = x[1]; x[1] = t; 
- 
-    t = x[4]; x[4] = x[8]; x[8] = x[2]; x[2] = x[10]; 
-    x[10] = x[12]; x[12] = x[14]; x[14] = x[0]; x[0] = t; 
- 
-    x[14] -= x[ 7]; x[ 7] -= x[14]; 
-    x[12] -= x[ 3]; x[ 3] -= x[12];
-    x[10] -= x[ 1]; x[ 1] -= x[10];
-    x[ 8] -= x[15]; x[15] -= x[ 8];
-    x[ 6] -= x[11]; x[11] -= x[ 6]; 
-    x[ 4] -= x[ 9]; x[ 9] -= x[ 4];
-    x[ 2] -= x[ 5]; x[ 5] -= x[ 2]; 
-    x[ 0] -= x[13]; x[13] -= x[ 0]; 
- 
-    x[14] -= x[ 9]; x[ 9] -= x[14]; 
-    x[12] -= x[11]; x[11] -= x[12]; 
-    x[10] -= x[13]; x[13] -= x[10]; 
-    x[ 8] -= x[ 5]; x[ 5] -= x[ 8]; 
-    x[ 6] -= x[ 1]; x[ 1] -= x[ 6]; 
-    x[ 4] -= x[ 7]; x[ 7] -= x[ 4]; 
-    x[ 2] -= x[15]; x[15] -= x[ 2]; 
-    x[ 0] -= x[ 3]; x[ 3] -= x[ 0]; 
- 
-    x[14] -= x[13]; x[13] -= x[14]; 
-    x[12] -= x[15]; x[15] -= x[12]; 
-    x[10] -= x[ 9]; x[ 9] -= x[10]; 
-    x[ 8] -= x[11]; x[11] -= x[ 8];     
-    x[ 6] -= x[ 5]; x[ 5] -= x[ 6]; 
-    x[ 4] -= x[ 3]; x[ 3] -= x[ 4]; 
-    x[ 2] -= x[ 1]; x[ 1] -= x[ 2]; 
-    x[ 0] -= x[ 7]; x[ 7] -= x[ 0]; 
- 
-    x[14] -= x[15]; x[15] -= x[14]; 
-    x[12] -= x[13]; x[13] -= x[12];
-    x[10] -= x[11]; x[11] -= x[10]; 
-    x[ 8] -= x[ 9]; x[ 9] -= x[ 8]; 
-    x[ 6] -= x[ 7]; x[ 7] -= x[ 6];
-    x[ 4] -= x[ 5]; x[ 5] -= x[ 4]; 
-    x[ 2] -= x[ 3]; x[ 3] -= x[ 2]; 
-    x[ 0] -= x[ 1]; x[ 1] -= x[ 0]; 
-     
-    x[ 0] = logf[x[ 0] - kp[16] + 256] ^ kp[ 0];
-    x[ 1] = expf[x[ 1] ^ kp[17]] - kp[ 1];
-    x[ 2] = expf[x[ 2] ^ kp[18]] - kp[ 2];
-    x[ 3] = logf[x[ 3] - kp[19] + 256] ^ kp[ 3];
- 
-    x[ 4] = logf[x[ 4] - kp[20] + 256] ^ kp[ 4];
-    x[ 5] = expf[x[ 5] ^ kp[21]] - kp[ 5];
-    x[ 6] = expf[x[ 6] ^ kp[22]] - kp[ 6];
-    x[ 7] = logf[x[ 7] - kp[23] + 256] ^ kp[ 7];
- 
-    x[ 8] = logf[x[ 8] - kp[24] + 256] ^ kp[ 8];
-    x[ 9] = expf[x[ 9] ^ kp[25]] - kp[ 9];
-    x[10] = expf[x[10] ^ kp[26]] - kp[10];
-    x[11] = logf[x[11] - kp[27] + 256] ^ kp[11];
- 
-    x[12] = logf[x[12] - kp[28] + 256] ^ kp[12];
-    x[13] = expf[x[13] ^ kp[29]] - kp[13];
-    x[14] = expf[x[14] ^ kp[30]] - kp[14];
-    x[15] = logf[x[15] - kp[31] + 256] ^ kp[15];
-};
- 
-void encrypt(const u4byte in_blk[4], u4byte out_blk[4])
-{   u1byte  blk[16], *kp;
- 
-    get_block(blk);
- 
-    do_fr(blk, l_key);       do_fr(blk, l_key +  32); 
-    do_fr(blk, l_key +  64); do_fr(blk, l_key +  96);
-    do_fr(blk, l_key + 128); do_fr(blk, l_key + 160);
-    do_fr(blk, l_key + 192); do_fr(blk, l_key + 224);
-     
-    if(k_bytes > 16)
-    {
-        do_fr(blk, l_key + 256); do_fr(blk, l_key + 288); 
-        do_fr(blk, l_key + 320); do_fr(blk, l_key + 352);
-    }
- 
-    if(k_bytes > 24)
-    {
-        do_fr(blk, l_key + 384); do_fr(blk, l_key + 416); 
-        do_fr(blk, l_key + 448); do_fr(blk, l_key + 480);
-    }
- 
-    kp = l_key + 16 * k_bytes;
- 
-    blk[ 0] ^= kp[ 0]; blk[ 1] += kp[ 1];
-    blk[ 2] += kp[ 2]; blk[ 3] ^= kp[ 3]; 
-    blk[ 4] ^= kp[ 4]; blk[ 5] += kp[ 5];
-    blk[ 6] += kp[ 6]; blk[ 7] ^= kp[ 7]; 
-    blk[ 8] ^= kp[ 8]; blk[ 9] += kp[ 9];
-    blk[10] += kp[10]; blk[11] ^= kp[11]; 
-    blk[12] ^= kp[12]; blk[13] += kp[13];
-    blk[14] += kp[14]; blk[15] ^= kp[15]; 
- 
-    put_block(blk);
-};
- 
-void decrypt(const u4byte in_blk[4], u4byte out_blk[4])
-{   u1byte  blk[16], *kp;
- 
-    get_block(blk);
- 
-    kp = l_key + 16 * k_bytes;
- 
-    blk[ 0] ^= kp[ 0]; blk[ 1] -= kp[ 1];
-    blk[ 2] -= kp[ 2]; blk[ 3] ^= kp[ 3];
-    blk[ 4] ^= kp[ 4]; blk[ 5] -= kp[ 5];
-    blk[ 6] -= kp[ 6]; blk[ 7] ^= kp[ 7];
-    blk[ 8] ^= kp[ 8]; blk[ 9] -= kp[ 9];
-    blk[10] -= kp[10]; blk[11] ^= kp[11];
-    blk[12] ^= kp[12]; blk[13] -= kp[13];
-    blk[14] -= kp[14]; blk[15] ^= kp[15];
- 
-    if(k_bytes > 24)
-    {
-        do_ir(blk, l_key + 480); do_ir(blk, l_key + 448); 
-        do_ir(blk, l_key + 416); do_ir(blk, l_key + 384);
-    }
- 
-    if(k_bytes > 16)
-    {
-        do_ir(blk, l_key + 352); do_ir(blk, l_key + 320); 
-        do_ir(blk, l_key + 288); do_ir(blk, l_key + 256);
-    }
- 
-    do_ir(blk, l_key + 224); do_ir(blk, l_key + 192); 
-    do_ir(blk, l_key + 160); do_ir(blk, l_key + 128);
-    do_ir(blk, l_key +  96); do_ir(blk, l_key +  64); 
-    do_ir(blk, l_key +  32); do_ir(blk, l_key);
- 
-    put_block(blk);
-};
-
 void get_key_j(unsigned char key_in[16] ,unsigned int key_out_j[4])
 {
     int i;
@@ -466,105 +311,46 @@ int main()
     unsigned int key_in_j[4];
     unsigned char block_in[16];
     unsigned char block_in_backup[16];
-    unsigned int block_out[4];
-    unsigned char *kp;
     unsigned char bd_addr[16];
+
+    bdaddr_input(bd_addr ,"0x7ca89b233c2d");
+
     key_input(key_in ,"0x159dd9f43fc3d328efba0cd8a861fa57");
-    for (i = 0 ; i < 4 ;i++) {
-    	printf("%x" ,key_in[i]);
-    }
-    printf("\n");
     set_key(key_in ,128);
-    for (j = 0 ;j <= 256 ;j+=16) {
-    	for (i = 0 ; i < 16 ;i++) {
-    	    printf("%x" ,l_key[i+j]);
-    	}
-    	printf("\n");
-    }
+
     block_input(block_in ,"0xbc3f30689647c8d7c5a03ca80a91eceb");
     block_backup(block_in_backup ,block_in);
 
-    for (j = 0 ;j < 256 ;j+=32) {
-    	printf("round:%d \n" ,(j/32)+2);
+    for(j = 0 ;j < 256 ;j+=32) {
     	do_fr(block_in ,&l_key[j]);
-    	for (i = 0 ;i < 16 ;i++) {
-	    printf("%x" ,block_in[i]);
-    	}
-    	printf("\n");
     }
-    kp = l_key + 256;
-    printf("key 17:\n");
-    for (i = 0 ;i < 16 ;i++) {
-    	printf("%x",kp[i]);
-    }
-    printf("\n");
-    ar_round_added(block_in ,kp);
-    printf("round:1.0\n");
-    for (i = 0 ;i < 16 ;i++) {
-        printf("%x" ,block_in[i]);
-    }
-    printf("\n");
-   
+
+    ar_round_added(block_in ,l_key + 256);
+ 
     for (i = 0 ;i < 16 ;i ++) {
     	block_in[i] = block_in[i] ^ block_in_backup[i];
     }
 
-    printf("round:1.1\n");
-    for (i = 0 ;i < 16 ;i++) {
-        printf("%x" ,block_in[i]);
-    }
-
-    printf("\n");
-    bdaddr_input(bd_addr ,"0x7ca89b233c2d");
     for (i = 0 ;i < 16 ;i ++) {
     	block_in[i] = (0xff & (block_in[i] + bd_addr[i]));
     }
- 
-    printf("round:1.2\n");
-    for (i = 0 ;i < 16 ;i++) {
-  	printf("%x" ,block_in[i]);
-    }
 
-    printf("\n");
-
+    /* 2th round input */
     block_backup(block_in_backup ,block_in);
     get_key_j(l_key, key_in_j);
-    printf("key_key`:\n");
     set_key(key_in_j ,128);
-    for (j = 0 ;j <= 256 ;j+=16) {
-        for (i = 0 ; i < 16 ;i++) {
-            printf("%x" ,l_key[i+j]);
-        }
-        printf("\n");
-    }
 
     for (j = 0 ;j < 64 ;j+=32) {
     	do_fr(block_in ,&l_key[j]);
-    	printf("round:%d\n" ,j/32 + 2);
-    	for (i = 0 ;i < 16 ;i++) {
-            printf("%x" ,block_in[i]);
-    	}
-    	printf("\n");
     }
 
     ar_round_added(block_in ,block_in_backup);    
-    printf("added:\n");
-    for (i = 0 ;i < 16 ;i++) {
-        printf("%x" ,block_in[i]);
-    }
 
-    printf("\n");
     for ( ;j < 256 ;j+=32) {
-        printf("round:%d \n" ,(j/32)+2);
         do_fr(block_in ,&l_key[j]);
-        for (i = 0 ;i < 16 ;i++) {
-            printf("%x" ,block_in[i]);
-        }
-        printf("\n");
     }
 
-    kp = l_key + 256;
-    ar_round_added(block_in ,kp);
+    ar_round_added(block_in ,l_key + 256);
     printf("output:\n");
     printf("sres:");
     for (i = 0 ;i < 4 ;i++) {
