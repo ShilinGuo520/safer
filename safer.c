@@ -360,11 +360,48 @@ void decrypt(const u4byte in_blk[4], u4byte out_blk[4])
     put_block(blk);
 };
 
+void get_key_j(unsigned char key_in[16] ,unsigned int key_out_j[4])
+{
+    int i;
+    unsigned char key_out[16];
+    key_out[0] = 0xff & (key_in[0] + 233);
+    key_out[1] = key_in[1] ^ 229;
+    key_out[2] = 0xff & (key_in[2] + 223);
+    key_out[3] = key_in[3] ^ 193;
+    key_out[4] = 0xff & (key_in[4] + 179);
+    key_out[5] = key_in[5] ^ 167 ;
+    key_out[6] = 0xff & (key_in[6] + 149);
+    key_out[7] = key_in[7] ^ 131;
+    key_out[8] = key_in[8] ^ 233;
+    key_out[9] = 0xff & (key_in[9] + 229);
+    key_out[10] = key_in[10] ^ 223;
+    key_out[11] = 0xff & (key_in[11] + 193);
+    key_out[12] = key_in[12] ^ 179;
+    key_out[13] = 0xff & (key_in[13] + 167);
+    key_out[14] = key_in[14] ^ 149;
+    key_out[15] = 0xff & (key_in[15] + 131);
+    for(i = 0 ;i < 4;i++) {
+        key_out_j[i] = (key_out[4*i] << 24) | (key_out[4*i + 1] << 16) | (key_out[4*i + 2] << 8) | (key_out[4*i + 3]);
+    }
+}
+
+void ar_round3(unsigned char data[16] ,unsigned char input[16])
+{
+    int i ;
+    for (i = 0 ;i < 16 ;i+=4) {
+        data[i] = data[i] ^ input[i];
+        data[i+1] = 0xff & (data[i+1] + input[i+1]);
+        data[i+2] = 0xff & (data[i+2] + input[i+2]);
+        data[i+3] = data[i+3] ^ input[i+3];
+    }
+}
 
 int main()
 {
     int i ,j ;
     unsigned int key_in[4];
+    unsigned int key_in_j[4];
+    unsigned char key_in_j_c[16];
     unsigned char block_in[16];
     unsigned char block_in_backup[16];
     unsigned int block_out[4];
@@ -385,12 +422,6 @@ int main()
     	}
     	printf("\n");
     }
-/*
-    block_in[0] = 0xbc3f3068;
-    block_in[1] = 0x9647c8d7;
-    block_in[2] = 0xc5a03ca8;
-    block_in[3] = 0x0a91eceb;
-*/
     block_in[0] = 0xbc;
     block_in[1] = 0x3f;
     block_in[2] = 0x30;
@@ -445,7 +476,7 @@ int main()
     	block_in[i] = block_in[i] ^ block_in_backup[i];
     }
 
-    printf("round:1.0\n");
+    printf("round:1.1\n");
     for (i = 0 ;i < 16 ;i++) {
         printf("%x" ,block_in[i]);
     }
@@ -475,6 +506,67 @@ int main()
     printf("round:1.2\n");
     for (i = 0 ;i < 16 ;i++) {
   	printf("%x" ,block_in[i]);
+    }
+
+    printf("\n");
+    for (i = 0 ;i < 16 ;i++) {
+        block_in_backup[i] = block_in[i];
+    }
+    get_key_j(l_key, key_in_j);
+    printf("key_key`:\n");
+    set_key(key_in_j ,128);
+    for (j = 0 ;j <= 256 ;j+=16) {
+        for (i = 0 ; i < 16 ;i++) {
+            printf("%x" ,l_key[i+j]);
+        }
+        printf("\n");
+    }
+
+    for (j = 0 ;j < 64 ;j+=32) {
+    	do_fr(block_in ,&l_key[j]);
+    	printf("round:%d\n" ,j/32 + 2);
+    	for (i = 0 ;i < 16 ;i++) {
+            printf("%x" ,block_in[i]);
+    	}
+    	printf("\n");
+    }
+    ar_round3(block_in ,block_in_backup);
+    
+    printf("added:\n");
+    for (i = 0 ;i < 16 ;i++) {
+        printf("%x" ,block_in[i]);
+    }
+
+    printf("\n");
+    for ( ;j < 256 ;j+=32) {
+        printf("round:%d \n" ,(j/32)+2);
+        do_fr(block_in ,&l_key[j]);
+        for (i = 0 ;i < 16 ;i++) {
+            printf("%x" ,block_in[i]);
+        }
+        printf("\n");
+    }
+
+    kp = l_key + 256;
+    block_in[ 0] ^= kp[ 0]; block_in[ 1] += kp[ 1];
+    block_in[ 2] += kp[ 2]; block_in[ 3] ^= kp[ 3];
+    block_in[ 4] ^= kp[ 4]; block_in[ 5] += kp[ 5];
+    block_in[ 6] += kp[ 6]; block_in[ 7] ^= kp[ 7];
+    block_in[ 8] ^= kp[ 8]; block_in[ 9] += kp[ 9];
+    block_in[10] += kp[10]; block_in[11] ^= kp[11];
+    block_in[12] ^= kp[12]; block_in[13] += kp[13];
+    block_in[14] += kp[14]; block_in[15] ^= kp[15];
+
+    printf("output:\n");
+    printf("sres:");
+    for (i = 0 ;i < 4 ;i++) {
+        printf("%x" ,block_in[i]);
+    }
+    printf("\n");
+
+    printf("aco:");
+    for (;i < 16 ;i++) {
+        printf("%x" ,block_in[i]);
     }
     printf("\n");
     return 0;
