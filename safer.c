@@ -1,47 +1,6 @@
-/* Timing data for SAFER+ (safer.c)
- 
-Core timing without I/O endian conversion:
- 
-128 bit key:
-Key Setup:    4278 cycles
-Encrypt:      1722 cycles =    14.9 mbits/sec
-Decrypt:      1709 cycles =    15.0 mbits/sec
-Mean:         1716 cycles =    14.9 mbits/sec
- 
-192 bit key:
-Key Setup:    7426 cycles
-Encrypt:      2555 cycles =    10.0 mbits/sec
-Decrypt:      2530 cycles =    10.1 mbits/sec
-Mean:         2543 cycles =    10.1 mbits/sec
- 
-256 bit key:
-Key Setup:   11313 cycles
-Encrypt:      3391 cycles =     7.5 mbits/sec
-Decrypt:      3338 cycles =     7.7 mbits/sec
-Mean:         3365 cycles =     7.6 mbits/sec
- 
-Full timing with I/O endian conversion:
- 
-128 bit key:
-Key Setup:    3977 cycles
-Encrypt:      1751 cycles =    14.6 mbits/sec
-Decrypt:      1734 cycles =    14.8 mbits/sec
-Mean:         1743 cycles =    14.7 mbits/sec
- 
-192 bit key:
-Key Setup:    6490 cycles
-Encrypt:      2574 cycles =     9.9 mbits/sec
-Decrypt:      2549 cycles =    10.0 mbits/sec
-Mean:         2562 cycles =    10.0 mbits/sec
- 
-256 bit key:
-Key Setup:    9487 cycles
-Encrypt:      3412 cycles =     7.5 mbits/sec
-Decrypt:      3372 cycles =     7.6 mbits/sec
-Mean:         3392 cycles =     7.5 mbits/sec
- 
-*/
- 
+
+/* Timing data for SAFER+ (safer.c) */
+
 #include "./std_defs.h"
 #include "stdio.h" 
 #include "string.h"
@@ -106,11 +65,11 @@ u1byte  l_key[33 * 16];
 u4byte  k_bytes;
  
 u4byte *set_key(const u4byte in_key[], const u4byte key_len)
-{   u1byte  by, lk[33];
+{
+    u1byte  by, lk[33];
     u4byte  i, j, k, l, m;
  
     get_key(lk, key_len);
- 
     k_bytes = key_len / 8; lk[k_bytes] = 0;
  
     for(i = 0; i < k_bytes; ++i) {
