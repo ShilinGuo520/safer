@@ -273,11 +273,14 @@ int main()
     unsigned char bd_addr[16];
 
     bdaddr_input(bd_addr ,"0x7ca89b233c2d");
-
     key_input(key_in ,"0x159dd9f43fc3d328efba0cd8a861fa57");
-    set_key(key_in ,128);
-
     block_input(block_in ,"0xbc3f30689647c8d7c5a03ca80a91eceb");
+/*
+    bdaddr_input(bd_addr ,"0x000000000000");
+    key_input(key_in ,"0x00000000000000000000000000000000");
+    block_input(block_in ,"0x00000000000000000000000000000000");
+*/
+    set_key(key_in ,128);
     block_backup(block_in_backup ,block_in);
 
     for(j = 0 ;j < 256 ;j+=32) {
