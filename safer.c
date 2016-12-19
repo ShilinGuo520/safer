@@ -241,6 +241,16 @@ void key_input(unsigned int key[4] ,const unsigned char key_c[])
     }
 }
 
+void key_c2key(unsigned int key[4] ,unsigned char bd_addr[16])
+{
+    int i;
+    unsigned char key_hex[16];
+    memcpy(key_hex ,bd_addr ,16);
+    for(i = 0 ;i < 4 ;i++) {
+        key[i] = (key_hex[4*i] << 24) | (key_hex[4*i + 1] << 16) | (key_hex[4*i + 2] << 8) | (key_hex[4*i + 3]);
+    }
+}
+
 void block_input(unsigned char block[16] ,const unsigned char round[])
 {
     int i;
@@ -352,7 +362,6 @@ int E3()
     key_input(key_in ,"0x34e86915d20c485090a6977931f96df5");
     block_input(block_in ,"0x950e604e655ea3800fe3eb4a28918087");
 
-
     set_key(key_in ,128);
     block_backup(block_in_backup ,block_in);
 
@@ -394,10 +403,149 @@ int E3()
     return 0;
 }
 
+int E21()
+{
+    int i ;
+    unsigned int key_in[4];
+    unsigned char block_in[16];
+    unsigned char block_in_backup[16];
+    unsigned char key_in_c[16];
+    
+    bdaddr_input(block_in ,"0x02f8fd4cd661");
+    block_input(key_in_c ,"0xdab3cffe9d5739d1b7bf4a667ae5ee24");
+    
+    key_in_c[15] = key_in_c[15] ^ 6;
+    key_c2key(key_in , key_in_c);
+
+    /* 2th(Ar') round input */
+    block_backup(block_in_backup ,block_in);
+    set_key(key_in ,128);
+
+    for (i = 0 ;i < 64 ;i+=32) {
+        do_fr(block_in ,&l_key[i]);
+    }
+
+    ar_round_added(block_in ,block_in_backup);
+
+    for ( ;i < 256 ;i+=32) {
+        do_fr(block_in ,&l_key[i]);
+    }
+
+    ar_round_added(block_in ,l_key + 256);
+    printf("Ka:\n");
+    for (i = 0 ;i < 16 ;i++) {
+        printf("%x" ,block_in[i]);
+    }
+    printf("\n");
+    return 0;
+}
+
+int E22()
+{
+    int i ;
+    unsigned int key_in[4];
+    unsigned char block_in[16];
+    unsigned char block_in_backup[16];
+    unsigned char key_l;
+/*
+    block_input(block_in ,"0x001de169248850245a5f7cc7f0d6d633");
+    key_input(key_in ,"0xd5a51083a04a1971f18649ea8b79311a");
+*/
+    block_input(block_in ,"0x67ed56bfcf99825f0c6b349369da30ab");
+    key_input(key_in ,"0x7885b515e84b1f082cc499976f1725ce");
+    key_l = 16;
+
+    block_in[15] = block_in[15] ^ key_l;
+
+    /* 2th(Ar') round input */
+    block_backup(block_in_backup ,block_in);
+    set_key(key_in ,128);
+
+    for (i = 0 ;i < 64 ;i+=32) {
+        do_fr(block_in ,&l_key[i]);
+    }
+
+    ar_round_added(block_in ,block_in_backup);
+
+    for ( ;i < 256 ;i+=32) {
+        do_fr(block_in ,&l_key[i]);
+    }
+
+    ar_round_added(block_in ,l_key + 256);
+    printf("Ka:\n");
+    for (i = 0 ;i < 16 ;i++) {
+        printf("%x" ,block_in[i]);
+    }
+    printf("\n");
+    return 0;
+}
+
+unsigned char aug_key_input(unsigned int key[4] , const unsigned char pin[] , const unsigned char bd_addr[])
+{
+    int i;
+    unsigned char key_temp[34];
+    unsigned char pin_len = strlen(pin);
+    if (pin_len == 34) {
+        key_input(key , pin);
+    } else if ((pin_len < 34) && (pin_len > 22)) {
+ 	memcpy(key_temp ,pin ,pin_len);
+        memcpy(key_temp+pin_len ,bd_addr + 2 ,34 - pin_len);
+    	key_input(key , key_temp);
+    } else {
+        memcpy(key_temp ,pin ,pin_len);
+        memcpy(key_temp + pin_len ,bd_addr + 2 ,12);
+	memcpy(key_temp + pin_len + 12 ,pin + 2 ,22 - pin_len);
+  	key_input(key , key_temp);
+    }
+
+    return (((pin_len-2)/2) > 10)?16:(((pin_len-2)/2) + 6);
+}
+
+int E22_AUG()
+{
+    int i;
+    unsigned int key_in[4];
+    unsigned char block_in[16];
+    unsigned char block_in_backup[16];
+    unsigned char key_l;
+
+    block_input(block_in ,"0x86290e2892f278ff6c3fb917b020576a");
+    key_l = aug_key_input(	key_in,
+				"0x3dcdffcfd086802107",
+				"0x791a6a2c5cc3");
+
+    block_in[15] = block_in[15] ^ key_l;
+
+    /* 2th(Ar') round input */
+    block_backup(block_in_backup ,block_in);
+    set_key(key_in ,128);
+    printf("\n");
+    for (i = 0 ;i < 64 ;i+=32) {
+        do_fr(block_in ,&l_key[i]);
+    }
+
+    ar_round_added(block_in ,block_in_backup);
+
+    for ( ;i < 256 ;i+=32) {
+        do_fr(block_in ,&l_key[i]);
+    }
+
+    ar_round_added(block_in ,l_key + 256);
+    printf("Ka:\n");
+    for (i = 0 ;i < 16 ;i++) {
+        printf("%x" ,block_in[i]);
+    }
+    printf("\n");
+    return 0;
+}
+
 int main()
 {
     E1();
     E3();
+    E21();
+    E22();
+    E22_AUG();
     return 0;
 }
 
