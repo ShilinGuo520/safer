@@ -263,7 +263,18 @@ void bdaddr_input(unsigned char bd_addr[16] ,const unsigned char addr[])
     }
 }
 
-int main()
+void aco_input(unsigned char cof[16] ,const unsigned char cof_c[])
+{
+    int i ;
+    unsigned char cof_hex[12];
+    printf("input aco: \n%s\n",cof_c);
+    char2hex(cof_c ,cof_hex);
+    for (i = 0 ; i < 16 ; i++) {
+	cof[i] = cof_hex[i%12];
+    }
+}
+
+int E1()
 {
     int i ,j ;
     unsigned int key_in[4];
@@ -327,4 +338,68 @@ int main()
     printf("\n");
     return 0;
 }
+
+int E3()
+{
+    int i ,j ;
+    unsigned int key_in[4];
+    unsigned int key_in_j[4];
+    unsigned char block_in[16];
+    unsigned char block_in_backup[16];
+    unsigned char aco_in[16];
+
+    aco_input(aco_in , "0x68f4f472b5586ac5850f5f74");
+    key_input(key_in ,"0x34e86915d20c485090a6977931f96df5");
+    block_input(block_in ,"0x950e604e655ea3800fe3eb4a28918087");
+
+
+    set_key(key_in ,128);
+    block_backup(block_in_backup ,block_in);
+
+    for(j = 0 ;j < 256 ;j+=32) {
+        do_fr(block_in ,&l_key[j]);
+    }
+
+    ar_round_added(block_in ,l_key + 256);
+
+    for (i = 0 ;i < 16 ;i ++) {
+        block_in[i] = block_in[i] ^ block_in_backup[i];
+    }
+
+    for (i = 0 ;i < 16 ;i ++) {
+        block_in[i] = (0xff & (block_in[i] + aco_in[i]));
+    }
+
+    /* 2th round input */
+    block_backup(block_in_backup ,block_in);
+    get_key_j(l_key, key_in_j);
+    set_key(key_in_j ,128);
+
+    for (j = 0 ;j < 64 ;j+=32) {
+        do_fr(block_in ,&l_key[j]);
+    }
+
+    ar_round_added(block_in ,block_in_backup);
+
+    for ( ;j < 256 ;j+=32) {
+        do_fr(block_in ,&l_key[j]);
+    }
+
+    ar_round_added(block_in ,l_key + 256);
+    printf("Kc:\n");
+    for (i = 0 ;i < 16 ;i++) {
+        printf("%x" ,block_in[i]);
+    }
+    printf("\n");
+    return 0;
+}
+
+int main()
+{
+    E1();
+    E3();
+    return 0;
+}
+
+
 
