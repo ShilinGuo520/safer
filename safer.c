@@ -44,6 +44,7 @@ Mean:         3392 cycles =     7.5 mbits/sec
  
 #include "./std_defs.h"
 #include "stdio.h" 
+#include "string.h"
 static char *alg_name[] = { "safer", "safer.c", "saferpls" };
  
 char **cipher_name()
@@ -385,7 +386,7 @@ void get_key_j(unsigned char key_in[16] ,unsigned int key_out_j[4])
     }
 }
 
-void ar_round3(unsigned char data[16] ,unsigned char input[16])
+void ar_round_added(unsigned char data[16] ,unsigned char input[16])
 {
     int i ;
     for (i = 0 ;i < 16 ;i+=4) {
@@ -396,21 +397,79 @@ void ar_round3(unsigned char data[16] ,unsigned char input[16])
     }
 }
 
+void block_backup(unsigned char backup[16] ,unsigned char block[16])
+{
+    int i;
+    for (i = 0 ;i < 16 ;i++) {
+	backup[i] = block[i];
+    }
+}
+
+void char2hex(const unsigned char ch[] ,unsigned char hex[])
+{
+    int i;
+    unsigned char temp;
+    int len;
+    len = strlen(ch);
+    len -= 2;
+    memset(hex ,0 ,len/2);
+    for(i = 0 ;i < len ;i++) {
+        temp = 0;
+        if(ch[i+2] >= 97)
+            temp = ch[i+2] - 87;
+        else if(ch[i+2] >= 65)
+   	    temp = ch[i+2] - 55;
+	else 
+	    temp = ch[i+2] - 48;
+        temp =0x0f & temp;
+        hex[i/2] |= temp << (4 * (1 - i%2));
+    }
+}
+
+void key_input(unsigned int key[4] ,const unsigned char key_c[])
+{
+    int i;
+    unsigned char key_hex[16];
+    printf("input key:\n%s\n" ,key_c);
+    char2hex(key_c ,key_hex);
+    for(i = 0 ;i < 4 ;i++) {
+	key[i] = (key_hex[4*i] << 24) | (key_hex[4*i + 1] << 16) | (key_hex[4*i + 2] << 8) | (key_hex[4*i + 3]);
+    }
+}
+
+void block_input(unsigned char block[16] ,const unsigned char round[])
+{
+    int i;
+    unsigned char block_hex[16];
+    printf("input round:\n%s\n" ,round);
+    char2hex(round ,block_hex);
+    for (i = 0 ;i < 16 ;i++) {
+	block[i] = block_hex[i];
+    }
+}
+
+void bdaddr_input(unsigned char bd_addr[16] ,const unsigned char addr[])
+{
+    int i;
+    unsigned char addr_hex[6];
+    printf("input bd addr:\n%s\n" ,addr);
+    char2hex(addr ,addr_hex);
+    for(i = 0 ;i < 16 ;i++) {
+	bd_addr[i] = addr_hex[i%6];
+    }
+}
+
 int main()
 {
     int i ,j ;
     unsigned int key_in[4];
     unsigned int key_in_j[4];
-    unsigned char key_in_j_c[16];
     unsigned char block_in[16];
     unsigned char block_in_backup[16];
     unsigned int block_out[4];
     unsigned char *kp;
     unsigned char bd_addr[16];
-    key_in[0] = 0x159dd9f4;
-    key_in[1] = 0x3fc3d328;
-    key_in[2] = 0xefba0cd8;
-    key_in[3] = 0xa861fa57;
+    key_input(key_in ,"0x159dd9f43fc3d328efba0cd8a861fa57");
     for (i = 0 ; i < 4 ;i++) {
     	printf("%x" ,key_in[i]);
     }
@@ -422,26 +481,8 @@ int main()
     	}
     	printf("\n");
     }
-    block_in[0] = 0xbc;
-    block_in[1] = 0x3f;
-    block_in[2] = 0x30;
-    block_in[3] = 0x68;
-    block_in[4] = 0x96;
-    block_in[5] = 0x47;
-    block_in[6] = 0xc8;
-    block_in[7] = 0xd7;
-    block_in[8] = 0xc5;
-    block_in[9] = 0xa0;
-    block_in[10] = 0x3c;
-    block_in[11] = 0xa8;
-    block_in[12] = 0x0a;
-    block_in[13] = 0x91;
-    block_in[14] = 0xec;
-    block_in[15] = 0xeb;
-
-    for (i = 0 ;i < 16 ;i++) {
- 	block_in_backup[i] = block_in[i];
-    }
+    block_input(block_in ,"0xbc3f30689647c8d7c5a03ca80a91eceb");
+    block_backup(block_in_backup ,block_in);
 
     for (j = 0 ;j < 256 ;j+=32) {
     	printf("round:%d \n" ,(j/32)+2);
@@ -457,15 +498,7 @@ int main()
     	printf("%x",kp[i]);
     }
     printf("\n");
-    block_in[ 0] ^= kp[ 0]; block_in[ 1] += kp[ 1];
-    block_in[ 2] += kp[ 2]; block_in[ 3] ^= kp[ 3];  
-    block_in[ 4] ^= kp[ 4]; block_in[ 5] += kp[ 5];
-    block_in[ 6] += kp[ 6]; block_in[ 7] ^= kp[ 7];  
-    block_in[ 8] ^= kp[ 8]; block_in[ 9] += kp[ 9];
-    block_in[10] += kp[10]; block_in[11] ^= kp[11];  
-    block_in[12] ^= kp[12]; block_in[13] += kp[13];
-    block_in[14] += kp[14]; block_in[15] ^= kp[15];
-
+    ar_round_added(block_in ,kp);
     printf("round:1.0\n");
     for (i = 0 ;i < 16 ;i++) {
         printf("%x" ,block_in[i]);
@@ -482,23 +515,7 @@ int main()
     }
 
     printf("\n");
-
-    bd_addr[0] = 0x7c;
-    bd_addr[1] = 0xa8;
-    bd_addr[2] = 0x9b;
-    bd_addr[3] = 0x23;
-    bd_addr[4] = 0x3c;
-    bd_addr[5] = 0x2d;
-    bd_addr[6] = 0x7c;
-    bd_addr[7] = 0xa8;
-    bd_addr[8] = 0x9b;
-    bd_addr[9] = 0x23;
-    bd_addr[10] = 0x3c;
-    bd_addr[11] = 0x2d;
-    bd_addr[12] = 0x7c;
-    bd_addr[13] = 0xa8; 
-    bd_addr[14] = 0x9b;
-    bd_addr[15] = 0x23;
+    bdaddr_input(bd_addr ,"0x7ca89b233c2d");
     for (i = 0 ;i < 16 ;i ++) {
     	block_in[i] = (0xff & (block_in[i] + bd_addr[i]));
     }
@@ -509,9 +526,8 @@ int main()
     }
 
     printf("\n");
-    for (i = 0 ;i < 16 ;i++) {
-        block_in_backup[i] = block_in[i];
-    }
+
+    block_backup(block_in_backup ,block_in);
     get_key_j(l_key, key_in_j);
     printf("key_key`:\n");
     set_key(key_in_j ,128);
@@ -530,8 +546,8 @@ int main()
     	}
     	printf("\n");
     }
-    ar_round3(block_in ,block_in_backup);
-    
+
+    ar_round_added(block_in ,block_in_backup);    
     printf("added:\n");
     for (i = 0 ;i < 16 ;i++) {
         printf("%x" ,block_in[i]);
@@ -548,15 +564,7 @@ int main()
     }
 
     kp = l_key + 256;
-    block_in[ 0] ^= kp[ 0]; block_in[ 1] += kp[ 1];
-    block_in[ 2] += kp[ 2]; block_in[ 3] ^= kp[ 3];
-    block_in[ 4] ^= kp[ 4]; block_in[ 5] += kp[ 5];
-    block_in[ 6] += kp[ 6]; block_in[ 7] ^= kp[ 7];
-    block_in[ 8] ^= kp[ 8]; block_in[ 9] += kp[ 9];
-    block_in[10] += kp[10]; block_in[11] ^= kp[11];
-    block_in[12] ^= kp[12]; block_in[13] += kp[13];
-    block_in[14] += kp[14]; block_in[15] ^= kp[15];
-
+    ar_round_added(block_in ,kp);
     printf("output:\n");
     printf("sres:");
     for (i = 0 ;i < 4 ;i++) {
