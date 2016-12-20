@@ -296,11 +296,7 @@ int E1()
     bdaddr_input(bd_addr ,"0x7ca89b233c2d");
     key_input(key_in ,"0x159dd9f43fc3d328efba0cd8a861fa57");
     block_input(block_in ,"0xbc3f30689647c8d7c5a03ca80a91eceb");
-/*
-    bdaddr_input(bd_addr ,"0x000000000000");
-    key_input(key_in ,"0x00000000000000000000000000000000");
-    block_input(block_in ,"0x00000000000000000000000000000000");
-*/
+
     set_key(key_in ,128);
     block_backup(block_in_backup ,block_in);
 
@@ -318,7 +314,7 @@ int E1()
     	block_in[i] = (0xff & (block_in[i] + bd_addr[i]));
     }
 
-    /* 2th round input */
+    /* 2th round input(Ar`) */
     block_backup(block_in_backup ,block_in);
     get_key_j(l_key, key_in_j);
     set_key(key_in_j ,128);
@@ -379,7 +375,7 @@ int E3()
         block_in[i] = (0xff & (block_in[i] + aco_in[i]));
     }
 
-    /* 2th round input */
+    /* 2th round input(Ar`) */
     block_backup(block_in_backup ,block_in);
     get_key_j(l_key, key_in_j);
     set_key(key_in_j ,128);
@@ -509,10 +505,10 @@ int E22_AUG()
     unsigned char block_in_backup[16];
     unsigned char key_l;
 
-    block_input(block_in ,"0x86290e2892f278ff6c3fb917b020576a");
+    block_input(block_in ,"0x272b73a2e40db52a6a61c6520549794a");
     key_l = aug_key_input(	key_in,
-				"0x3dcdffcfd086802107",
-				"0x791a6a2c5cc3");
+				"0x549f2694f353f5145772d8ae1e",
+				"0x20487681eb9f");
 
     block_in[15] = block_in[15] ^ key_l;
 
